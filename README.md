@@ -34,9 +34,12 @@
 ```
 python -m venv venv
 venv\Scripts\activate
+```
 - Установите зависимости из файла requirments.txt
 ```
 pip install -r requirements
+```
 - В папке с файлом main.py выполните команду:
 ```
 uvicorn main:app --reload
+```

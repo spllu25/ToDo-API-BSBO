@@ -1,131 +1,76 @@
-from fastapi import APIRouter
-from fastapi import HTTPException, Query, Response, status
-from datetime import datetime
-from database import tasks_db
-from schemas import TaskBase, TaskCreate, TaskResponse, TaskUpdate
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, and_
+from datetime import datetime, timezone
+from typing import List
 
+from models import Task
+from database import get_async_session
 
 router = APIRouter(
     prefix="/stats",
-    tags=["stats"],
-    responses={404:{'description':'Task not found'}},
+    tags=["statistics"]
 )
 
-@router.get("")
-async def get_all_tasks() -> dict:
-    return {
-        "count": len(tasks_db), 
-        "tasks": tasks_db 
-}
+@router.get("/", response_model=dict)
+async def get_tasks_stats(db: AsyncSession = Depends(get_async_session)) -> dict:
+    result = await db.execute(select(Task))
+    tasks = result.scalars().all()
+    total_tasks = len(tasks)
+    by_quadrant = {"Q1": 0, "Q2": 0, "Q3": 0, "Q4": 0}
+    by_status = {"completed": 0, "pending": 0}
 
-# Endpoint для поиска задач по ключевому слову
-@router.get("/search")
-async def search_tasks(q: str) -> dict:
-    if len(q) < 2:
-        raise HTTPException(
-            status_code=400,
-            detail="Ключевое слово должно содержать минимум 2 символа"
-        )
-    
-    search_results = [
-        task for task in tasks_db
-        if (task["title"] and q.lower() in task["title"].lower()) or
-           (task["description"] and q.lower() in task["description"].lower())
-    ]
-    
-    if not search_results:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Задачи по запросу '{q}' не найдены"
-        )
-    
+    for task in tasks:
+        if task.quadrant in by_quadrant:
+            by_quadrant[task.quadrant] += 1
+        if task.completed:
+            by_status["completed"] += 1
+        else:
+            by_status["pending"] += 1
     return {
-        "query": q,
-        "count": len(search_results),
-        "tasks": search_results
-    }
-
-
-# Endpoint для получения статистики по задачам
-@router.get("/stats")
-async def get_tasks_stats() -> dict:
-    by_quadrant = {
-        "Q1": len([task for task in tasks_db if task["quadrant"] == "Q1"]),
-        "Q2": len([task for task in tasks_db if task["quadrant"] == "Q2"]),
-        "Q3": len([task for task in tasks_db if task["quadrant"] == "Q3"]),
-        "Q4": len([task for task in tasks_db if task["quadrant"] == "Q4"])
-    }
-    
-    completed_tasks = len([task for task in tasks_db if task["completed"]])
-    pending_tasks = len([task for task in tasks_db if not task["completed"]])
-    
-    return {
-        "total_tasks": len(tasks_db),
+        "total_tasks": total_tasks,
         "by_quadrant": by_quadrant,
-        "by_status": {
-            "completed": completed_tasks,
-            "pending": pending_tasks
-        }
+        "by_status": by_status
     }
 
-
-@router.get("/quadrant/{quadrant}")
-async def get_tasks_by_quadrant(quadrant: str) -> dict:
-    if quadrant not in ["Q1", "Q2", "Q3", "Q4"]:
-        raise HTTPException( 
-            status_code=400,
-            detail="Неверный квадрант. Используйте: Q1, Q2, Q3, Q4" 
-)
-    filtered_tasks = [
-        task 
-        for task in tasks_db 
-        if task["quadrant"] == quadrant
-    ]
-
-    return {
-        "quadrant": quadrant,
-        "count": len(filtered_tasks),
-        "tasks": filtered_tasks
-    }
-
-
-# Endpoint для фильтрации задач по статусу выполнения
-@router.get("/status/{status}")
-async def get_tasks_by_status(status: str) -> dict:
-    if status not in ["completed", "pending"]:
-        raise HTTPException(
-            status_code=400,
-            detail="Неверный статус. Используйте: 'completed' или 'pending'"
+# НОВЫЙ ЭНДПОИНТ - Статистика по дедлайнам
+@router.get("/deadlines")
+async def get_deadline_stats(db: AsyncSession = Depends(get_async_session)):
+    """Статистика по срокам выполнения задач со статусом 'pending'"""
+    today = datetime.now(timezone.utc).date()
+    
+    # Получить все незавершенные задачи с дедлайном
+    result = await db.execute(
+        select(Task).where(
+            and_(
+                Task.completed == False,
+                Task.deadline_at.isnot(None)
+            )
         )
+    )
+    pending_tasks = result.scalars().all()
     
-    is_completed = (status == "completed")
-    
-    filtered_tasks = [
-        task for task in tasks_db 
-        if task["completed"] == is_completed
-    ]
-    
-    if not filtered_tasks:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Задачи со статусом '{status}' не найдены"
-        )
+    stats = []
+    for task in pending_tasks:
+        if task.deadline_at:
+            if task.deadline_at.tzinfo:
+                deadline_date = task.deadline_at.astimezone(timezone.utc).date()
+            else:
+                deadline_date = task.deadline_at.date()
+            
+            days_remaining = (deadline_date - today).days
+            
+            stats.append({
+                "id": task.id,
+                "title": task.title,
+                "description": task.description,
+                "created_at": task.created_at,
+                "deadline_at": task.deadline_at,
+                "days_remaining": days_remaining
+            })
     
     return {
-        "status": status,
-        "count": len(filtered_tasks),
-        "tasks": filtered_tasks
+        "today": today.isoformat(),
+        "total_pending_tasks_with_deadlines": len(stats),
+        "tasks": sorted(stats, key=lambda x: x["days_remaining"])
     }
-
-# Endpoint для получения задачи по ID
-@router.get("/{task_id}", response_model=TaskResponse)
-async def get_task_by_id(task_id: int) -> TaskResponse:
-    task = next((task for task in tasks_db if task["id"] == task_id), None)
-    
-    if task is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Задача с ID {task_id} не найдена"
-        )
-    
-    return task

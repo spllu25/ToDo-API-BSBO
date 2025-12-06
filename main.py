@@ -3,17 +3,23 @@ from contextlib import asynccontextmanager
 from database import init_db, get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
-from routers import tasks, stats
+from routers import tasks, stats, auth
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print(" Запуск приложения...")
-    print(" Инициализация базы данных...")
-    await init_db()
-    print(" Приложение готово к работе!")
+    print("Запуск приложения...")
+    print("Инициализация базы данных...")
+    
+    try:
+        await init_db()
+        print("База данных инициализирована!")
+    except Exception as e:
+        print(f"Ошибка инициализации БД: {e}")
+        print("Продолжаем без базы данных...")
+    
+    print("Приложение готово к работе!")
     yield 
-
-    print(" Остановка приложения...")
+    print("Остановка приложения...")
 
 app = FastAPI(
     title="ToDo лист API",
@@ -22,11 +28,12 @@ app = FastAPI(
     contact={
         "name": "Ваше Имя",
     },
-    lifespan=lifespan # Подключаем lifespan
+    lifespan=lifespan
 )
 
-app.include_router(tasks.router, prefix="/api/v2") # подключение роутера к приложению
-app.include_router(stats.router, prefix="/api/v2")
+app.include_router(auth.router, prefix="/api/v3")
+app.include_router(tasks.router, prefix="/api/v3")
+app.include_router(stats.router, prefix="/api/v3")
 
 @app.get("/")
 async def read_root() -> dict:
@@ -36,7 +43,7 @@ async def read_root() -> dict:
         "database": "PostgreSQL (Supabase)",
         "docs": "/docs",
         "redoc": "/redoc",
- }
+    }
 
 @app.get("/health")
 async def health_check(
@@ -48,10 +55,10 @@ async def health_check(
     try:
         await db.execute(text("SELECT 1"))
         db_status = "connected"
-    except Exception:
-        db_status = "disconnected"
+    except Exception as e:
+        db_status = f"disconnected: {str(e)}"
+    
     return {
-        "status": "healthy",
+        "status": "healthy" if db_status == "connected" else "degraded",
         "database": db_status
     }
-

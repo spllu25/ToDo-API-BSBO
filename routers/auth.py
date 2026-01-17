@@ -91,6 +91,8 @@ async def get_me(
     from dependencies import get_current_user
     return current_user
 
+
+
 @router.patch("/change-password", status_code=status.HTTP_200_OK)
 async def change_password(
     password_data: PasswordChange,
@@ -127,6 +129,4 @@ async def change_password(
     current_user.hashed_password = new_hashed_password
     await db.commit()
     
-    return {
-        "message": "Пароль успешно изменен"
-    }
+    return {"message": "Пароль успешно изменен"}

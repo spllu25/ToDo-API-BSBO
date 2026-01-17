@@ -1,0 +1,285 @@
+* {
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body.auth-page {
+    min-height: 100vh;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    background: white;
+    padding: 32px;
+    width: 360px;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.auth-card h1 {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.auth-card h2 {
+    margin-bottom: 16px;
+}
+
+.auth-card input {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.primary-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background: #5b5bff;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.primary-btn:hover {
+    background: #4a4aff;
+}
+
+.switch-text {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 14px;
+}
+
+.link-btn {
+    background: none;
+    border: none;
+    color: #5b5bff;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* ---------- TASK PAGE ---------- */
+
+body {
+    background: #f4f6fb;
+}
+
+.top-bar {
+    background: white;
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.top-actions button {
+    margin-left: 8px;
+}
+
+.container {
+    max-width: 900px;
+    margin: 32px auto;
+}
+
+.filters {
+    margin-bottom: 16px;
+}
+
+.filters button {
+    margin-right: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: white;
+    cursor: pointer;
+}
+
+.task-list {
+    list-style: none;
+    padding: 0;
+}
+
+.task-list li {
+    background: white;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.task-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.task-left input {
+    width: 18px;
+    height: 18px;
+}
+
+.task-title.done {
+    text-decoration: line-through;
+    color: #888;
+}
+
+.task-actions button {
+    margin-left: 6px;
+}
+
+/* ---------- STATS ---------- */
+
+.stats-card {
+    margin-top: 24px;
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+}
+
+/* ---------- MODALS ---------- */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-card {
+    background: white;
+    width: 380px;
+    padding: 24px;
+    border-radius: 16px;
+    position: relative;
+}
+
+.modal-card input,
+.modal-card textarea {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px;
+}
+
+.modal-close {
+    position: absolute;
+    right: 12px;
+    top: 10px;
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.checkbox-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+/* ---------- BUTTONS ---------- */
+
+.primary-btn {
+    background: #5b5bff;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.secondary-btn {
+    background: #eee;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* ===== TOP BAR ===== */
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn.primary {
+    background: #5b5fff;
+    color: white;
+}
+
+.btn.primary:hover {
+    background: #4a4de6;
+}
+
+.btn.secondary {
+    background: #f0f0f0;
+}
+
+.btn.secondary:hover {
+    background: #e2e2e2;
+}
+
+/* ===== TASK ITEM ===== */
+
+.task-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: white;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.task-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.task-delete {
+    border: none;
+    background: #ffe5e5;
+    color: #b00000;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.task-delete:hover {
+    background: #ffcccc;
+}

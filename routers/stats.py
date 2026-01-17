@@ -120,7 +120,6 @@ async def get_all_users(
     
     Доступно только администраторам
     """
-    # Запрос для получения пользователей с количеством задач
     stmt = select(
         User.id,
         User.nickname,
@@ -134,7 +133,6 @@ async def get_all_users(
     result = await db.execute(stmt)
     users_with_counts = result.all()
     
-    # Преобразуем результат в список словарей
     users_list = []
     for user in users_with_counts:
         users_list.append(UserWithTasksCount(

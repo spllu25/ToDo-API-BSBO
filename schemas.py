@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, validator
 from typing import Optional
 from datetime import datetime, timezone
 
+
 # Базовая схема для Task
 class TaskBase(BaseModel):
     title: str = Field(
@@ -22,10 +23,18 @@ class TaskBase(BaseModel):
 
 # Схема для создания новой задачи
 class TaskCreate(TaskBase):
-    @validator('deadline_at')
+    @validator("deadline_at")
     def deadline_must_be_future(cls, v):
-        if v and v <= datetime.now(timezone.utc):
-            raise ValueError('Дедлайн должен быть в будущем')
+        if v is None:
+            return v
+
+    # если пришла дата БЕЗ timezone — считаем, что это UTC
+        if v.tzinfo is None:
+            v = v.replace(tzinfo=timezone.utc)
+
+        if v <= datetime.now(timezone.utc):
+            raise ValueError("Дедлайн должен быть в будущем")
+
         return v
 
 # Схема для обновления задачи
@@ -77,3 +86,9 @@ class TaskResponse(TaskBase):
 
     class Config:
         from_attributes = True
+
+
+
+class UserUpdate(BaseModel):
+    nickname: Optional[str] = None
+    password: Optional[str] = None

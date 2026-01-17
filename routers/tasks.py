@@ -335,49 +335,71 @@ async def update_task(
         user_id = task.user_id
     )
 
-# PATCH - ОТМЕТИТЬ ЗАДАЧУ ВЫПОЛНЕННОЙ
+# @router.patch("/{task_id}/complete", response_model=TaskResponse)
+# async def complete_task(
+#     task_id: int,
+#     db: AsyncSession = Depends(get_async_session),
+#     current_user: User = Depends(get_current_user)
+# ) -> TaskResponse:
+#     result = await db.execute(
+#         select(Task).where(Task.id == task_id)
+#     )
+#     task = result.scalar_one_or_none()
+    
+#     if not task:
+#         raise HTTPException(status_code=404, detail="Задача не найдена")
+
+#     if current_user.role.value != 'admin' and task.user_id != current_user.id:
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             detail="Нет доступа к этой задаче"
+#         )
+
+#     # 🔁 TOGGLE completed
+#     if task.completed:
+#         task.completed = False
+#         task.completed_at = None
+#     else:
+#         task.completed = True
+#         task.completed_at = datetime.now(timezone.utc)
+
+#     await db.commit()
+#     await db.refresh(task)
+
+#     is_urgent = calculate_urgency(task.deadline_at)
+#     days_until_deadline = calculate_days_until_deadline(task.deadline_at)
+    
+#     return TaskResponse(
+#         id=task.id,
+#         title=task.title,
+#         description=task.description,
+#         is_important=task.is_important,
+#         deadline_at=task.deadline_at,
+#         quadrant=task.quadrant,
+#         is_urgent=is_urgent,
+#         days_until_deadline=days_until_deadline,
+#         completed=task.completed,
+#         created_at=task.created_at,
+#         completed_at=task.completed_at,
+#         user_id=task.user_id
+#     )
+
 @router.patch("/{task_id}/complete", response_model=TaskResponse)
-async def complete_task(
+async def toggle_task(
     task_id: int,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
-) -> TaskResponse:
-    result = await db.execute(
-        select(Task).where(Task.id == task_id)
-    )
+):
+    result = await db.execute(select(Task).where(Task.id == task_id))
     task = result.scalar_one_or_none()
-    
-    if not task:
-        raise HTTPException(status_code=404, detail="Задача не найдена")
 
-    if current_user.role.value != 'admin' and task.user_id!= current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Нет доступа к этой задаче")
-    
-
-    task.completed = True
-    task.completed_at = datetime.now(timezone.utc)
+    task.completed = not task.completed
+    task.completed_at = datetime.now(timezone.utc) if task.completed else None
 
     await db.commit()
     await db.refresh(task)
+    return task
 
-    # Добавляем расчетные поля для ответа
-    is_urgent = calculate_urgency(task.deadline_at)
-    days_until_deadline = calculate_days_until_deadline(task.deadline_at)
-    
-    return TaskResponse(
-        id=task.id,
-        title=task.title,
-        description=task.description,
-        is_important=task.is_important,
-        deadline_at=task.deadline_at,
-        quadrant=task.quadrant,
-        is_urgent=is_urgent,
-        days_until_deadline=days_until_deadline,
-        completed=task.completed,
-        created_at=task.created_at,
-        completed_at=task.completed_at,
-        user_id = task.user_id
-    )
 
 # DELETE - УДАЛЕНИЕ ЗАДАЧИ
 @router.delete("/{task_id}", status_code=status.HTTP_200_OK)
